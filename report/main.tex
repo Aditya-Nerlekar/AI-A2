@@ -13,9 +13,12 @@
 \graphicspath{{../results/figures/}{figures/}}
 \newcommand{\todo}[1][]{\textcolor{red}{\textbf{TODO}}}
 % \fig{file}{width}: include figure if it exists, else a visible placeholder box
-\newcommand{\fig}[2]{\IfFileExists{../results/figures/#1.pdf}{\includegraphics[width=#2]{#1}}%
-  {\IfFileExists{figures/#1.pdf}{\includegraphics[width=#2]{#1}}%
-  {\fbox{\parbox[c][2cm][c]{0.92\linewidth}{\centering\textcolor{red}{\textbf{TODO:} run \texttt{scripts/run\_all.sh}}\\\texttt{\detokenize{#1}}}}}}}
+\newcommand{\figbox}[1]{\fbox{\parbox[c][2cm][c]{0.92\linewidth}{\centering\textcolor{red}{\textbf{TODO:} run \texttt{scripts/run\_all.sh}}\\\texttt{\detokenize{#1}}}}}
+\newcommand{\fig}[2]{%
+  \IfFileExists{figures/#1.png}{\includegraphics[width=#2]{#1}}{%
+  \IfFileExists{figures/#1.pdf}{\includegraphics[width=#2]{#1}}{%
+  \IfFileExists{../results/figures/#1.pdf}{\includegraphics[width=#2]{#1}}{%
+  \IfFileExists{../results/figures/#1.png}{\includegraphics[width=#2]{#1}}{\figbox{#1}}}}}}
 % primitive \input: expandable, so generated rows can end a tabular cleanly
 \makeatletter\newcommand{\rowsfrom}[1]{\@@input #1 }\makeatother
 \setlength{\textfloatsep}{5pt plus 2pt minus 1pt}
@@ -30,8 +33,8 @@
 
 \begin{document}
 \title{NotifyRL: Learning When to Interrupt --- Deep Q-Learning for Smartphone Notification Scheduling}
-\author{\IEEEauthorblockN{[TEAM MEMBERS: names and e-mails]}
-\IEEEauthorblockA{Code and trained agents: \url{[GITHUB_LINK]}}}
+\author{\IEEEauthorblockN{[TEAM MEMBERS: Aditya Nerlekar, Nayan Kute]}
+\IEEEauthorblockA{Code and trained agents: \url{https://github.com/Aditya-Nerlekar/AI-A2}}}
 \maketitle
 
 \section{Introduction}
@@ -79,14 +82,13 @@ Policy & Return/day $\uparrow$ & Urgent miss \% $\downarrow$ & Urg.\ latency (mi
 \section{Experiments and Results}
 Policies are evaluated greedily on the same 100 held-out days (Table~\ref{tab:main}, Fig.~\ref{fig:main}). \textbf{Baselines.} Always-Deliver never misses an urgent item but fires 37.5 alerts/day while the user is focused, in a meeting or asleep and ends with a negative return ($-6.7$). The threshold rule is the strongest baseline ($15.7\pm1.2$; 10.4 such alerts/day; no urgent misses), ahead of DND ($14.0\pm1.2$).
 
-\textbf{Main result.} \todo{} Fig.~\ref{fig:main}a: when agents pass the baselines, seed spread. Table~\ref{tab:main}: Dueling+Double vs.\ threshold (return, urgent misses, alerts f/m/s).
+\textbf{Main result.} The learned agents match the strongest rule while interrupting less. The feed-forward variants reach the threshold rule's validation return within about 100--200 of 400 training days, with a narrow seed spread (Fig.~\ref{fig:main}a); the 4-frame stack plateaus lower. On held-out days Dueling+Double reaches $16.5\pm0.6$ vs.\ $15.7\pm1.2$ (within the CIs) and cuts f/m/s alerts from 10.4 to 8.7 per day (Table~\ref{tab:main}), but misses 1.9\% of urgent items (the rules miss none) and delivers fewer relevant items (84.3\% vs.\ 97.0\%). Plain DQN scores highest ($17.3\pm0.6$; 2.9\% misses).
 
+\textbf{Learned behaviour.} Overnight, \textsc{Suppress} dominates (about 75\% of decisions at 02:00; Fig.~\ref{fig:main}c) and \textsc{Batch} grows through the afternoon (about 40\% at 16:00). For a 14:00 chat (Fig.~\ref{fig:main}d), a user observed as focused gets \textsc{Batch} at low urgency and \textsc{Defer} at higher urgency, with \textsc{Deliver} only above an attention estimate of about 0.9; an idle user's items are almost all batched, which is close to immediate delivery since the digest is released once the user is idle.
 
-\textbf{Learned behaviour.} \todo{} Fig.~\ref{fig:main}c--d: night-time handling, batching in work hours, deliver region focused vs.\ idle.
+\textbf{Ablations.} Double and Dueling do not raise return (DQN 17.3, Double 16.3, Dueling+Double 16.5) but lower alerts and urgent misses (2.9\%$\to$1.9\%) at the cost of relevant delivery (90.6\%$\to$84.3\%); 4-frame stacking hurts ($14.4\pm0.8$). The reward weights act as designed (Fig.~\ref{fig:main}e; 2 seeds, indicative): doubling $w_i$ cuts alerts from 8.7 to 6.4 per day but raises misses from 1.9\% to 8.3\%, halving $w_i$ raises alerts to 10.8, and halving $w_m$ raises misses to 4.1\%; doubling $w_m$ changes little (1.5\%).
 
-\textbf{Ablations.} \todo{} Table~\ref{tab:main} (lower block): Double/Dueling and 4-frame history. Fig.~\ref{fig:main}e: does larger $w_i$ cut alerts and smaller $w_m$ raise misses, as designed?
-
-\textbf{Transfer.} Table~\ref{tab:gen} tests the student-trained agent on a night-shift worker who sleeps through the daytime notification peak; this profile is harder even for the threshold rule ($9.2\pm1.1$ vs.\ $15.7\pm1.2$ per day). \todo{} Zero-shot gap; recovery after 100 fine-tuning days vs.\ training from scratch.
+\textbf{Transfer.} Table~\ref{tab:gen} tests the student-trained agent on a night-shift worker who sleeps through the daytime notification peak; this profile is harder even for the threshold rule ($9.2\pm1.1$ vs.\ $15.7\pm1.2$ per day). Zero-shot, the student agent earns $9.2\pm0.6$, level with the threshold rule and above DND, but with 3.5\% urgent misses. Fine-tuning for 100 days does not help ($8.6\pm0.8$), whereas training from scratch on the night-shift profile is best ($10.7\pm0.7$; 2.2\% misses), 1.5 above the threshold rule.
 
 \begin{table}[t]
 \centering\caption{Transfer to the night-shift profile (100 held-out days).}\label{tab:gen}
@@ -99,7 +101,7 @@ Policy & Return/day & Urgent miss \% & Alerts f/m/s\\\midrule
 \end{table}
 
 \section{Discussion, Limitations, Future Work}
-\textbf{Failure cases.} \todo{} Days where DQN trails the threshold rule most, and why (misread activity, digest released into a meeting, urgent burst with full queue).
+\textbf{Failure cases.} The clearest weakness is urgent misses (1.9--3.5\% vs.\ 0 for the rules). Fig.~\ref{fig:main}d suggests a cause: a focused user's urgent chats are deferred, and since urgent items expire after 10--15\,min while deferrals return after 15\,min, a deferral can become a miss. We did not run a per-day breakdown of where DQN trails the threshold rule.
 \textbf{Limitations.} The user model and reward weights are our assumptions and engagement is an expected value, not observed behaviour, so absolute numbers say nothing about real users (sim-to-real gap); digest release uses the true activity as a stand-in for unlock detection; one reward encodes one trade-off, while users differ.
 \textbf{Future work.} Calibrate on logged notification data~\cite{pielot2014insitu,mehrotra2016myphone}, off-policy evaluation before deployment, per-user weights learned from feedback, and a recurrent Q-network~\cite{hausknecht2015drqn}.
 
