@@ -1,0 +1,56 @@
+[
+  {
+    "tag": "finetune_night",
+    "variant": "dueling_double",
+    "seed": 0,
+    "profile": "night_shift",
+    "frame_stack": 1,
+    "episodes": 100,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 1.0,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "models/dueling_double_s0.pt",
+    "train_seconds": 21.798187732696533
+  },
+  {
+    "tag": "finetune_night",
+    "variant": "dueling_double",
+    "seed": 1,
+    "profile": "night_shift",
+    "frame_stack": 1,
+    "episodes": 100,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 1.0,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "models/dueling_double_s1.pt",
+    "train_seconds": 22.083383798599243
+  },
+  {
+    "tag": "finetune_night",
+    "variant": "dueling_double",
+    "seed": 2,
+    "profile": "night_shift",
+    "frame_stack": 1,
+    "episodes": 100,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 1.0,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "models/dueling_double_s2.pt",
+    "train_seconds": 22.34990382194519
+  }
+]

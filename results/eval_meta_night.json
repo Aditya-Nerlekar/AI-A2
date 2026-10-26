@@ -1,0 +1,18 @@
+{
+  "profile": "night_shift",
+  "episodes": 100,
+  "seed_offset": 10000,
+  "models": [
+    "models/dueling_double_s0.pt",
+    "models/dueling_double_s1.pt",
+    "models/dueling_double_s2.pt",
+    "models/dueling_double_s3.pt",
+    "models/dueling_double_s4.pt",
+    "models/finetune_night_s0.pt",
+    "models/finetune_night_s1.pt",
+    "models/finetune_night_s2.pt",
+    "models/night_native_s0.pt",
+    "models/night_native_s1.pt",
+    "models/night_native_s2.pt"
+  ]
+}

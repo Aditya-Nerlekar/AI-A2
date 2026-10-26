@@ -1,0 +1,108 @@
+\documentclass[conference,10pt]{IEEEtran}
+% NotifyRL report -- AI Course, Assignment 2.
+% Compile: pdflatex main && bibtex main && pdflatex main && pdflatex main
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+% Figures: repo results/figures/ (local) or report/figures/ (Overleaf upload).
+\graphicspath{{../results/figures/}{figures/}}
+\newcommand{\todo}[1][]{\textcolor{red}{\textbf{TODO}}}
+% \fig{file}{width}: include figure if it exists, else a visible placeholder box
+\newcommand{\fig}[2]{\IfFileExists{../results/figures/#1.pdf}{\includegraphics[width=#2]{#1}}%
+  {\IfFileExists{figures/#1.pdf}{\includegraphics[width=#2]{#1}}%
+  {\fbox{\parbox[c][2cm][c]{0.92\linewidth}{\centering\textcolor{red}{\textbf{TODO:} run \texttt{scripts/run\_all.sh}}\\\texttt{\detokenize{#1}}}}}}}
+% primitive \input: expandable, so generated rows can end a tabular cleanly
+\makeatletter\newcommand{\rowsfrom}[1]{\@@input #1 }\makeatother
+\setlength{\textfloatsep}{5pt plus 2pt minus 1pt}
+\setlength{\dbltextfloatsep}{5pt plus 2pt minus 1pt}
+\setlength{\floatsep}{4pt plus 2pt}
+\setlength{\abovecaptionskip}{1pt}
+\setlength{\belowcaptionskip}{0pt}
+\setlength{\abovedisplayskip}{2pt}
+\setlength{\belowdisplayskip}{2pt}
+\renewcommand{\dbltopfraction}{0.8}
+\renewcommand{\topfraction}{0.85}
+
+\begin{document}
+\title{NotifyRL: Learning When to Interrupt --- Deep Q-Learning for Smartphone Notification Scheduling}
+\author{\IEEEauthorblockN{[TEAM MEMBERS: names and e-mails]}
+\IEEEauthorblockA{Code and trained agents: \url{[GITHUB_LINK]}}}
+\maketitle
+
+\section{Introduction}
+People receive around a hundred notifications a day~\cite{pielot2014insitu}, and badly timed alerts disrupt work and sleep~\cite{mehrotra2016myphone,okoshi2015attelia,ho2005context}; static rules (Do-Not-Disturb, hourly summaries) ignore content, while delaying an OTP makes it useless. The right handling depends on the item, the user's unobserved attention and the queue, and its effects unfold over time, so we pose it as reinforcement learning~\cite{sutton2018reinforcement} and train a from-scratch DQN to \emph{deliver}, \emph{defer}, \emph{batch} or \emph{suppress} each notification.
+
+\section{Problem Formulation}
+\textbf{Environment and dynamics.} A custom Gymnasium~\cite{towers2024gymnasium} environment simulates one day in 5-min ticks ($T{=}288$). The hidden activity $\in\{$sleeping, focused, meeting, commuting, idle, on-phone$\}$ is a time-inhomogeneous Markov chain: it persists w.p.\ $0.85$ per tick, else it is resampled from an hour-of-day profile (weekday/weekend; \emph{student} for training, \emph{night-shift} for transfer). Hidden attention $a_t$ is the activity mean ($0.02$ asleep \dots\ $0.95$ on phone) $+\,\mathcal N(0,0.08^2)$. Notifications arrive by a non-homogeneous Poisson process (${\approx}112$/day, evening peak) in 7 categories (chat, e-mail, social, news, calendar, OTP, promotion) with category-specific urgency $u$, hidden relevance $\rho$, salience $\sigma$ and lifetime; urgent items ($u{\ge}0.7$: OTPs, reminders, 10\% of chats; ${\approx}16$/day) expire 10--15\,min after arrival, others lose value with a 2-h half-life. Deferred items return after 15\,min; the digest is released when the user is idle/on-phone, holds 6 items or is 90\,min old; at most 20 items are held. The agent acts only when an item needs a decision (event-driven semi-MDP, ${\approx}112$ decisions/day); arrivals and user dynamics use policy-independent RNG streams, so all policies face identical days. \emph{The simulator is synthetic: all parameters are our assumptions, not fitted to user data.}
+
+\textbf{State} $s\in[-1,1]^{28}$: $\sin/\cos$ time (2), weekday (1), \emph{observed} activity one-hot (6; wrong w.p.\ 0.15), \emph{noisy} attention $\hat a{=}a{+}\mathcal N(0,0.15^2)$ (1), current item's urgency (1), category one-hot (7), sender importance (1), age and time-to-deadline (2), held-queue and digest length (2), oldest held age (1), max held urgency (1), time since last alert (1), alerts in past hour (1), fraction of day left (1). Hidden $a,\rho$ make it a POMDP.
+
+\textbf{Actions} $\mathcal A{=}\{\textsc{Deliver},\textsc{Defer},\textsc{Batch},\textsc{Suppress}\}$ (discrete, 4).
+
+\textbf{Reward} accrued until the next decision is credited to the current action:
+\begin{align*}
+r ={}& w_v\rho_n f_n e(a) - w_i(1{-}a)\sigma_n d - w_m\!\textstyle\sum_{k\in\mathcal M}\!u_k\\
+&- w_s\textstyle\sum_{\tau}\sum_{k\in\mathcal H_\tau}u_k - w_f[I_{1h}{+}1{-}B]^+ + w_d\mathbb 1[a{\ge}0.6],
+\end{align*}
+with engagement $e(a){=}0.25{+}0.75a$, freshness $f$, $d{=}0.5$ for a second alert in the same tick, $\mathcal M$ urgent items missed (suppressed, expired, overflowed, or pending at day end), $\mathcal H_\tau$ items held at tick $\tau$, $I_{1h}$ alerts in the past hour, $B{=}6$. A digest delivers each item at $0.8\times$ value for one alert ($\sigma{=}0.6$), plus $w_d$ if well timed. \emph{Design:} $w_v{=}1$ sets the unit; $w_i{=}1$ lets a full-salience alert at zero attention cancel the best possible delivery (a real trade-off); $w_m{=}3$ makes a missed OTP worse than any interruption; $w_s{=}0.02$ (${<}0.1$ per held hour) stops endless deferral; $w_f{=}0.3$ curbs bursts; $w_d{=}0.15$ rewards well-timed digests. \textbf{Horizon:} one day, terminating at midnight; $\gamma{=}0.97$ per decision (effective horizon ${\approx}33$ decisions, 6--8\,h).
+
+\section{Algorithm and Baselines}
+DQN~\cite{mnih2015human} is implemented in PyTorch without RL libraries: MLP $28{\to}128{\to}128{\to}4$ (ReLU), ring-buffer replay (50k, batch 64, 1k warm-up), Polyak target ($\tau{=}0.005$), $\epsilon$-greedy $1{\to}0.05$ over 60\% of training, Huber loss, gradient-norm clip 10, Adam (lr $5{\times}10^{-4}$), 400 training days per seed. Flags enable Double DQN~\cite{vanhasselt2016double}, $y{=}r{+}\gamma Q_{\bar\theta}(s',\arg\max_{a'}Q_\theta(s',a'))$, and a dueling head~\cite{wang2016dueling}, $Q{=}V{+}A{-}\bar A$; the main agent is Dueling+Double (5 seeds). For partial observability we also stack the last 4 observations (cf.~\cite{hausknecht2015drqn}).
+\textbf{Baselines} (comparison only; same noisy input): \emph{Always-Deliver} (phone default); \emph{Random}; \emph{Schedule} (urgent now, rest released at the top of each hour); \emph{DND} (deliver if urgent or observed idle/on-phone, else batch, suppress promotions); \emph{Threshold} (deliver if urgent or $u{+}\hat a{\ge}1$, batch if $u{+}\hat a{\ge}0.35$ or importance ${>}0.6$, else suppress).
+
+\begin{table*}[t]
+\centering
+\caption{Held-out evaluation, student profile: 100 unseen days (seeds 10000--10099), identical for all policies; DQN rows pool training seeds. Return: mean$\pm$95\% CI; f/m/s: alerts/day while focused, in a meeting or asleep.}\label{tab:main}
+\footnotesize\setlength{\tabcolsep}{3.7pt}
+\begin{tabular}{@{}lccccccc@{}}\toprule
+Policy & Return/day $\uparrow$ & Urgent miss \% $\downarrow$ & Urg.\ latency (min) $\downarrow$ & Alerts/awake h $\downarrow$ & Alerts f/m/s $\downarrow$ & Relevant deliv.\ \% $\uparrow$ & Non-urg.\ delay (min)\\\midrule
+\rowsfrom{generated/main_table_rows.tex}
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure*}[t]
+\centering
+\begin{minipage}[b]{0.315\textwidth}\centering\fig{fig1_training_curve}{\linewidth}\\{\footnotesize (a) learning curves}\end{minipage}\hfill
+\begin{minipage}[b]{0.665\textwidth}\centering\fig{fig2_metrics_vs_baselines}{\linewidth}\\{\footnotesize (b) DQN vs.\ baselines, held-out days}\end{minipage}\\[3pt]
+\begin{minipage}[b]{0.33\textwidth}\centering\fig{fig3_actions_by_hour}{\linewidth}\\{\footnotesize (c) action share by hour}\end{minipage}\hfill
+\begin{minipage}[b]{0.33\textwidth}\centering\fig{fig4_policy_heatmap}{\linewidth}\\{\footnotesize (d) greedy action, 14:00 chat}\end{minipage}\hfill
+\begin{minipage}[b]{0.315\textwidth}\centering\fig{fig5_reward_sensitivity}{\linewidth}\\{\footnotesize (e) reward-weight sensitivity}\end{minipage}
+\caption{(a) Greedy return on 10 validation days during training (mean$\pm$std over seeds; black: baselines). (b) Dueling+Double DQN vs.\ Always-Deliver, Random, Schedule, DND, Threshold; 95\% CIs. (c) DQN actions by hour. (d) Seed-0 greedy action over (attention estimate, urgency), weekday 14:00 chat, empty queue. (e) Retrained with $w_i$/$w_m$ halved or doubled (2 seeds): alerts f/m/s (bars), urgent-miss rate (red).}\label{fig:main}
+\end{figure*}
+
+\section{Experiments and Results}
+Policies are evaluated greedily on the same 100 held-out days (Table~\ref{tab:main}, Fig.~\ref{fig:main}). \textbf{Baselines.} Always-Deliver never misses an urgent item but fires 37.5 alerts/day while the user is focused, in a meeting or asleep and ends with a negative return ($-6.7$). The threshold rule is the strongest baseline ($15.7\pm1.2$; 10.4 such alerts/day; no urgent misses), ahead of DND ($14.0\pm1.2$).
+
+\textbf{Main result.} \todo{} Fig.~\ref{fig:main}a: when agents pass the baselines, seed spread. Table~\ref{tab:main}: Dueling+Double vs.\ threshold (return, urgent misses, alerts f/m/s).
+
+
+\textbf{Learned behaviour.} \todo{} Fig.~\ref{fig:main}c--d: night-time handling, batching in work hours, deliver region focused vs.\ idle.
+
+\textbf{Ablations.} \todo{} Table~\ref{tab:main} (lower block): Double/Dueling and 4-frame history. Fig.~\ref{fig:main}e: does larger $w_i$ cut alerts and smaller $w_m$ raise misses, as designed?
+
+\textbf{Transfer.} Table~\ref{tab:gen} tests the student-trained agent on a night-shift worker who sleeps through the daytime notification peak; this profile is harder even for the threshold rule ($9.2\pm1.1$ vs.\ $15.7\pm1.2$ per day). \todo{} Zero-shot gap; recovery after 100 fine-tuning days vs.\ training from scratch.
+
+\begin{table}[t]
+\centering\caption{Transfer to the night-shift profile (100 held-out days).}\label{tab:gen}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lccc@{}}\toprule
+Policy & Return/day & Urgent miss \% & Alerts f/m/s\\\midrule
+\rowsfrom{generated/generalisation_rows.tex}
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion, Limitations, Future Work}
+\textbf{Failure cases.} \todo{} Days where DQN trails the threshold rule most, and why (misread activity, digest released into a meeting, urgent burst with full queue).
+\textbf{Limitations.} The user model and reward weights are our assumptions and engagement is an expected value, not observed behaviour, so absolute numbers say nothing about real users (sim-to-real gap); digest release uses the true activity as a stand-in for unlock detection; one reward encodes one trade-off, while users differ.
+\textbf{Future work.} Calibrate on logged notification data~\cite{pielot2014insitu,mehrotra2016myphone}, off-policy evaluation before deployment, per-user weights learned from feedback, and a recurrent Q-network~\cite{hausknecht2015drqn}.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\end{document}

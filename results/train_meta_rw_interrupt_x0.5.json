@@ -1,0 +1,38 @@
+[
+  {
+    "tag": "rw_interrupt_x0.5",
+    "variant": "dueling_double",
+    "seed": 0,
+    "profile": "student",
+    "frame_stack": 1,
+    "episodes": 400,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 0.5,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "",
+    "train_seconds": 102.8699197769165
+  },
+  {
+    "tag": "rw_interrupt_x0.5",
+    "variant": "dueling_double",
+    "seed": 1,
+    "profile": "student",
+    "frame_stack": 1,
+    "episodes": 400,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 0.5,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "",
+    "train_seconds": 91.75646018981934
+  }
+]

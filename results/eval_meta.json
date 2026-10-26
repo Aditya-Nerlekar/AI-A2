@@ -1,0 +1,33 @@
+{
+  "profile": "student",
+  "episodes": 100,
+  "seed_offset": 10000,
+  "models": [
+    "models/vanilla_s0.pt",
+    "models/vanilla_s1.pt",
+    "models/vanilla_s2.pt",
+    "models/vanilla_s3.pt",
+    "models/vanilla_s4.pt",
+    "models/double_s0.pt",
+    "models/double_s1.pt",
+    "models/double_s2.pt",
+    "models/double_s3.pt",
+    "models/double_s4.pt",
+    "models/dueling_double_s0.pt",
+    "models/dueling_double_s1.pt",
+    "models/dueling_double_s2.pt",
+    "models/dueling_double_s3.pt",
+    "models/dueling_double_s4.pt",
+    "models/fs4_s0.pt",
+    "models/fs4_s1.pt",
+    "models/fs4_s2.pt",
+    "models/rw_interrupt_x0.5_s0.pt",
+    "models/rw_interrupt_x0.5_s1.pt",
+    "models/rw_interrupt_x2_s0.pt",
+    "models/rw_interrupt_x2_s1.pt",
+    "models/rw_miss_x0.5_s0.pt",
+    "models/rw_miss_x0.5_s1.pt",
+    "models/rw_miss_x2_s0.pt",
+    "models/rw_miss_x2_s1.pt"
+  ]
+}

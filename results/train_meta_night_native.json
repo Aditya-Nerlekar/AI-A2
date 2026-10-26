@@ -1,0 +1,56 @@
+[
+  {
+    "tag": "night_native",
+    "variant": "dueling_double",
+    "seed": 0,
+    "profile": "night_shift",
+    "frame_stack": 1,
+    "episodes": 400,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 1.0,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "",
+    "train_seconds": 87.78386425971985
+  },
+  {
+    "tag": "night_native",
+    "variant": "dueling_double",
+    "seed": 1,
+    "profile": "night_shift",
+    "frame_stack": 1,
+    "episodes": 400,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 1.0,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "",
+    "train_seconds": 94.44299626350403
+  },
+  {
+    "tag": "night_native",
+    "variant": "dueling_double",
+    "seed": 2,
+    "profile": "night_shift",
+    "frame_stack": 1,
+    "episodes": 400,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 1.0,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "",
+    "train_seconds": 91.91101288795471
+  }
+]

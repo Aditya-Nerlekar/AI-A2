@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "notifyrl"
+version = "0.1.0"
+description = "Deep Q-learning for intelligent smartphone notification scheduling (course project)"
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.24", "torch>=2.1", "gymnasium>=0.29", "matplotlib>=3.7", "pandas>=2.0"]
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+
+[tool.setuptools]
+packages = ["notifyrl"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

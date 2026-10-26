@@ -1,0 +1,92 @@
+[
+  {
+    "tag": "double",
+    "variant": "double",
+    "seed": 0,
+    "profile": "student",
+    "frame_stack": 1,
+    "episodes": 400,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 1.0,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "",
+    "train_seconds": 98.43392395973206
+  },
+  {
+    "tag": "double",
+    "variant": "double",
+    "seed": 1,
+    "profile": "student",
+    "frame_stack": 1,
+    "episodes": 400,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 1.0,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "",
+    "train_seconds": 87.16524577140808
+  },
+  {
+    "tag": "double",
+    "variant": "double",
+    "seed": 2,
+    "profile": "student",
+    "frame_stack": 1,
+    "episodes": 400,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 1.0,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "",
+    "train_seconds": 93.19294142723083
+  },
+  {
+    "tag": "double",
+    "variant": "double",
+    "seed": 3,
+    "profile": "student",
+    "frame_stack": 1,
+    "episodes": 400,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 1.0,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "",
+    "train_seconds": 93.0913679599762
+  },
+  {
+    "tag": "double",
+    "variant": "double",
+    "seed": 4,
+    "profile": "student",
+    "frame_stack": 1,
+    "episodes": 400,
+    "reward_weights": {
+      "w_value": 1.0,
+      "w_interrupt": 1.0,
+      "w_miss": 3.0,
+      "w_stale": 0.02,
+      "w_fatigue": 0.3,
+      "w_digest": 0.15
+    },
+    "init_from": "",
+    "train_seconds": 96.8032739162445
+  }
+]
